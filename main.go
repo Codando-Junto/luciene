@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Codando-Junto/ong_da_laiz/internal/handlers"
+	"github.com/Codando-Junto/ong_da_laiz/internal/infra/database"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -14,6 +16,7 @@ import (
 )
 
 func main() {
+	database.ConnectDB()
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "9090"
@@ -21,6 +24,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/health", HealthHandler).Methods("GET")
+	handlers.DefineAuthors(r)
 
 	log.Println("Rodando na porta: " + port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
