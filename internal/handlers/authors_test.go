@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"lucienne/internal/domain"
+	"lucienne/internal/infra/repository"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -42,6 +43,17 @@ func TestCreateAuthorHandler(t *testing.T) {
 			},
 			expectedStatusCode:   http.StatusCreated,
 			expectedBodyContains: "Autor criado com sucesso: Novo Autor",
+		},
+		{
+			name:     "deve retornar erro 409 ao tentar criar um autor que já existe",
+			formName: "Autor Existente",
+			mockRepo: &MockAuthorRepository{
+				CreateAuthorFunc: func(ctx context.Context, author *domain.Author) error {
+					return repository.ErrAuthorAlreadyExists // Simula erro de duplicidade do DB
+				},
+			},
+			expectedStatusCode:   http.StatusConflict,
+			expectedBodyContains: "Erro: O autor 'Autor Existente' já está cadastrado.",
 		},
 		{
 			name:                 "deve retornar erro 400 se o nome estiver em branco",
