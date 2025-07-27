@@ -6,7 +6,9 @@ import (
 	"lucienne/internal/handlers"
 	"lucienne/internal/infra/database"
 	"lucienne/internal/infra/repository"
+	"lucienne/pkg/renderer"
 	"net/http"
+	"path"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -27,6 +29,12 @@ const (
 func main() {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if err := renderer.HTML.Render(w, "home.html", nil); err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Ocorreu um erro ao renderizar a página"))
+		}
+	}).Methods("GET")
 	r.HandleFunc("/health", handlers.HealthHandler).Methods("GET")
 	r.PathPrefix(AssetsServerPath).Handler(http.StripPrefix(AssetsServerPath, http.FileServer(http.Dir(CompiledAssetsPath))))
 
@@ -45,6 +53,7 @@ func init() {
 	config.EnvVariables.Load()
 	config.Application.Configure(config.EnvVariables.AppEnv)
 	config.Assets.Configure(AssetsPath, CompiledAssetsPath, AssetsBuildFilePath)
+	renderer.HTML.Configure(AssetsServerPath, path.Join(config.Application.RootPath, ViewsPath), config.Assets.AssetsMapping)
 	database.ConnectDB()
 
 	m, err := migrate.New(
